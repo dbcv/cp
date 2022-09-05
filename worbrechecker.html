@@ -34,7 +34,7 @@
         var uuidlist = ["TEST"];
         var pushon = false;
         var now = new Date();
-        localStorage.setItem("informeduuid", JSON.stringify(uuidlist))
+        //localStorage.setItem("informeduuid", JSON.stringify(uuidlist))
         var uuidlist = JSON.parse(localStorage.getItem("informeduuid"))
         const timer = setTimeout(() => { location.reload() }, 300000)
         window.onload = () => {
