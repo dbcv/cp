@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/push.js/0.0.11/push.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/emailjs-com@2/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function () {
+            emailjs.init("jwvI3xOavB3JPLQUh"); //please encrypted user id for malicious attacks
+        })();
+        //set the parameter as per you template parameter[https://dashboard.emailjs.com/templates]
+    </script>
+    <style>
+        body {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        input {
+            width: 20vw;
+            height: 10vh;
+            font-size: 10px;
+        }
+
+        p {
+            width: 80vw;
+        }
+    </style>
+    <script>
+        var WBlatest = [];
+        var streamernames = [];
+        var uuidlist = ["TEST"];
+        var pushon = false;
+        var now = new Date();
+        localStorage.setItem("informeduuid", JSON.stringify(uuidlist))
+        var uuidlist = JSON.parse(localStorage.getItem("informeduuid"))
+        const timer = setTimeout(() => { location.reload() }, 300000)
+        window.onload = () => {
+            WBload()
+        }
+        function WBload() {
+            if (true) {//最新情報読み込み
+                let request = new XMLHttpRequest();
+                request.onreadystatechange = function () {
+                    if (request.readyState == 4) {
+                        if (request.status == 200) {
+                            let ImportFile = JSON.parse(request.responseText)
+                            WBlatest = ImportFile
+                            console.log(WBlatest)
+                            livecheck()
+                        }
+                    }
+                }
+                request.open('GET', "https://api.fingger.com/api/v1/distributions/games/jp.fingger.block/latest?limit=5&offset=0", true);
+                //request.open('GET', "https://api.fingger.com/api/v1/distributions/games/jp.fingger.novelhorror/latest?limit=5&offset=0", true);
+                request.send(null);
+            }
+        }
+        function livecheck() {
+            for (video of WBlatest.data) {
+                if (video["status"] == "Live" && (!uuidlist.includes(video["uuid"]))) {
+                    uuidlist.push(video["uuid"])
+                    console.log(video["uuid"])
+                    pushon = true
+                }
+            }
+            console.log(uuidlist)
+            localStorage.setItem("informeduuid", JSON.stringify(uuidlist))
+            for (video of WBlatest.data) {
+                if (video.status == "Live") {
+                    streamernames.push(video.userName)
+                    $("<a>", { href: `https://youtube.com/watch?v=${video.youTube.broadcastId}` }).html(video.userName).prependTo('#history');
+                    $("<p>", { style: "font-size:30px" }).html("").prependTo('#history');
+                }
+            }
+            if (pushon) {
+                document.getElementById("push").click()
+                document.getElementById("mail").click()
+            }
+            $("<p>", { style: "font-size:30px" }).html("上記時刻時点での配信者").prependTo('#history');
+            $("<p>", {}).html(now.toLocaleString()).prependTo('#history');
+        }
+    </script>
+    <script>
+        function crelem(tag, param_obj, parentid, place_bool) {
+            //tag=Str,param=Dict,parentid=Str,place=t:before,f:after
+            if (place_bool) {
+                $("<" + tag + ">", param_obj).prependTo('#' + parentid);
+            } else {
+                $("<" + tag + ">", param_obj).appendTo('#' + parentid);
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <center>
+        <h1 style="margin-top: 50px">fingger WB 更新情報</h1>
+    </center>
+    <center id="history">
+
+    </center>
+    <center>
+        <input type="button" id="push" onclick="return gopush()" value="クリックするとプッシュ通知が送られます" hidden>
+        <input type="button" id="mail" onclick="mailsend()" value="MAIL" hidden>
+    </center>
+    <script>
+        function gopush() {
+            Push.create("WORD BREAKER 最新情報",
+                {
+                    body: `${streamernames.join(" や ")}が配信中です!`,
+                    icon: 'https://yt3.ggpht.com/ouJYZ4G0iON7MFYyxkNjYkyiiwbZY6fr26YuVqlze0ZkONqKqTG_XHNM78sKYt7AbO8vZmAL=s800-c-k-c0x00ffffff-no-rj',
+                    timeout: 80000,
+                    onClick: function () {
+                        window.focus();
+                        this.close();
+                    }
+                })
+        }
+        function mailsend() {
+            var templateParams = {
+                to_name: "Taro",
+                from_name: streamernames.join(" & ") + ((streamernames.length>1)?" are":" is"),
+                message: ''
+            };
+            emailjs.send('service_5d6h1iw', 'template_qtrbir8', templateParams)
+                .then(function (response) {
+                    console.log('SUCCESS!', response.status, response.text);
+                }, function (error) {
+                    console.log('FAILED...', error);
+                });
+        }
+    </script>
+</body>
+
+</html>
